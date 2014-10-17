@@ -2,7 +2,7 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>Kronor to beers!</title>
+	<title>SEK 2 beers!</title>
 	<style>
 
 	</style>
@@ -10,172 +10,65 @@
 <body>
 	<ul id="beers-list"></ul>
 	<form action="" method="get">
-		<input type="number" name="amount" id="amount" value="" placeholder="Belopp i SEK" />
+		<input type="number" name="amount" id="amount" value="" placeholder="Antal cash i fickan" />
 		<label for="prefered">Räkna i:</label>
-		<input type="text" name="prefered" value="" placeholder="Artikelnummer">
+		<input type="text" id="prefered" name="prefered" value="" placeholder="Namnet på bärsen">
+		<span id="calculate">Kalkylera</span>
 	</form>
 	<h1 id="result"></h1>
+
+	<script type="text/javascript" src="lib/js/helper.js"></script>
+
 	<script type="text/javascript">
 		(function(){
-			var h = {
-				ajaxObject: (function(){
-					var factories = [
-						function () {return new XMLHttpRequest()},
-						function () {return new ActiveXObject("Msxml2.XMLHTTP")},
-						function () {return new ActiveXObject("Msxml3.XMLHTTP")},
-						function () {return new ActiveXObject("Microsoft.XMLHTTP")}
-					],
-					xmlhttp = false;
 
-					for (var i=0;i<factories.length;i++) {
-						try {
-							xmlhttp = factories[i]();
-						}
-						catch (e) {
-							continue;
-						}
-						// Return function that creates new object
-						// not an instance
-						xmlhttp = factories[i];
-						break;
-					}
-
-					return xmlhttp;
-				})(),
-				ajax: function( url, callback, data, async, ctx, args ) {
-					var method = data ? 'POST' : 'GET', // Default to 'GET'
-					async = async || true, // Default to async mode
-					req = this.ajaxObject(),
-					ctx = ctx || window;
-
-					if (!req) {
-						return;
-					}
-
-					req.open(method,url,async);
-
-					// Set extra headers passed to ajax()
-					if (arguments.length > 4) {
-						for (var i = 4; i < arguments.length; i++){
-							if (arguments[i][0] && arguments[i][0]){
-								req.setRequestHeader(arguments[i][0], arguments[i][1]);
-							}
-						}
-					}
-
-					if (data) {
-						req.setRequestHeader('Content-type','application/x-www-form-urlencoded');
-					}
-
-					req.onreadystatechange = function () {
-						if (req.readyState != 4) {
-							return;
-						}
-
-						if (req.status != 200 && req.status != 304) {
-							return;
-						}
-
-						/*
-						 * Pass on any extra arguments the callback
-						 */
-						callback.apply(ctx, [req, args]);
-					}
-
-					if (req.readyState == 4) {
-						return;
-					}
-
-					//req.send(data);
-				},
-
-				registerEventHandler: (function(){
-					if ( document.addEventListener ) {
-						return function( node, type, callback ){
-							node.addEventListener(type, callback, false );
-						};
-					} else if ( document.attachEvent ){
-						return function( node, type, callback ) {
-							node.attachEvent( 'on' + type, callback );
-						};
-					}
-				})(),
-
-				unregisterEventHandler: (function(){
-					if ( document.addEventListener ) {
-						return function( node, type, callback ){
-							node.removeEventListener(type, callback, false );
-						};
-					} else if ( document.attachEvent ){
-						return function( node, type, callback ) {
-							node.detachEvent( 'on' + type, callback );
-						};
-					}
-				})(),
-
-				addEvent: function( node, type, callback, sender ) {
-					var wrapCallback = (function( helper ){
-						return function( event ){
-							callback.apply(this, [helper.normaliseEvent(event || window.event), sender]);
-						}
-					})(this);
-
-					this.registerEventHandler(node, type, wrapCallback);
-
-					// Return object to make event handler easy to detach
-					return {
-						node: node,
-						type: type,
-						callback: wrapCallback
-					};
-				},
-
-				removeEvent: function( object ) {
-					this.unregisterEventHandler( object.node, object.type, object.callback );
-				},
-
-				normaliseEvent: function( event ) {
-					if (!event.stopPropagation) {
-						event.stopPropagation = function() {this.cancelBubble = true;};
-						event.preventDefault = function() {this.returnValue = false;};
-					}
-
-					if (!event.stop) {
-						event.stop = function() {
-							this.stopPropagation();
-							this.preventDefault();
-						};
-					}
-
-					if (event.srcElement && !event.target) {
-						event.target = event.srcElement;
-					}
-
-					return event;
-				},
-			};
+			var h = helper;
 
 			var app = {
 				settings: {
-					apiUrl: 'sortiment.xml',
+					apiUrl: 'http://systemetapi.se/product/',
 					list: document.getElementById('beers-list'),
 					result: document.getElementById('result'),
-					input: document.getElementById('amount')
+					input: document.getElementById('calculate'),
+					amount: document.getElementById('amount'),
+					name: document.getElementById('prefered')
 				},
+
+				beers: [],
 
 				init: function() {
 					this.bindUiActions();
+					this.get();
 				},
 
 				bindUiActions: function() {
-					h.addEvent(this.settings.input, 'change', this.get, this);
+					h.addEvent(this.settings.input, 'click', function() {
+						if(app.settings.amount.value && app.settings.name.value) {
+							for(var i = 0; i < amountpp.beers.length; i++) {
+								if(app.beers[i].name.toLowerCase() == app.settings.name.value.toLowerCase()) {
+									var price = parseInt(app.settings.amount.value) / (app.beers[i].price + 1.00);
+									result.innerHTML = parseInt(price, 10);
+								}
+							}
+						}
+						return false;
+					}, this);
 				},
 
 				get: function( event, self ) {
-					debugger;
-					h.ajax( self.settings.apiUrl, function( req ) {
-						console.log(req.data);
-					}, false, true, self );
+					h.larsjsonp(this.settings.apiUrl, {
+						apk_from: 2.5,
+						apk_to: 10,
+						limit: 500
+					}, function(data) {
+						for(var i = 0; i < data.length; i++) {
+							if(data[i].tags[0] && data[i].tags[0].name == 'beer') {
+								app.beers.push(data[i]);
+							}
+						}
+
+						console.log(app.beers);
+					});
 				},
 
 				convert: function( sek ) {
